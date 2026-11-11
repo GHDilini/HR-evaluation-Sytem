@@ -1,0 +1,27 @@
+# Secrets: keep .env.example tracked
+.env
+.env.*
+!.env.example
+
+# Dependencies and builds
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# Supabase local state
+supabase/.temp/
+supabase/.branches/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# System and editor files
+.DS_Store
+*.log
+.vscode/
+.idea/
