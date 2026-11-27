@@ -160,20 +160,110 @@ Final ratings don't change after locking, even if they affect pay or promotion, 
 
 Three gates define the product: the review form opens only after the lead publishes KPIs, the reveal happens only after both submit, and the record locks only after HR confirms.
 
+### System flow
+
+The first diagram shows the six stages in order, what happens inside each one, and what moves a form to the next. Colour shows who acts.
+
 ```mermaid
 flowchart TD
-  HR["HR opens the cycle<br/>One form per employee"]
-  KPI["KPI setup<br/>Lead sets KPIs for the coming year"]
-  subgraph Blind["Blind stage: each person sees only their own answers; HR sees status"]
-    EMP["Employee self review<br/>Save drafts, then submit"]
-    LEAD["Lead manager review<br/>Opens after the employee submits"]
+  START(["HR opens the cycle<br/>One form per employee"]):::hr --> K1
+
+  subgraph S1["Stage 1 · KPI setup"]
+    K1["Lead sets 3 to 6 KPIs<br/>for the coming year"]:::lead --> K2["Lead publishes the KPIs<br/>by the due date"]:::lead
   end
-  REV["Revealed<br/>Both reviews visible; HR is notified"]
-  MEET["HR sets the meeting<br/>Employee and lead are notified"]
-  FIN["Final ratings<br/>Lead enters them during the meeting"]
-  CONF["HR confirmation<br/>HR and management discuss and confirm"]
-  DONE["Review done<br/>Locked, permanent history"]
-  HR --> KPI --> EMP --> LEAD --> REV --> MEET --> FIN --> CONF --> DONE
+  K2 -->|"Review form opens<br/>Employee is notified"| B1
+
+  subgraph S2["Stage 2 · Blind"]
+    B1["Employee completes and<br/>submits the self review"]:::emp -->|"Lead is notified"| B2["Lead completes and<br/>submits the manager review"]:::lead
+  end
+  B2 -->|"Both submitted<br/>Employee, lead and HR are notified"| R1
+
+  subgraph S3["Stage 3 · Revealed"]
+    R1["Employee and lead read<br/>each other's answers"]:::both --> R2["HR sets the meeting<br/>date, time and place"]:::hr
+  end
+  R2 -->|"Final ratings page opens<br/>Employee and lead are notified"| F1
+
+  subgraph S4["Stage 4 · Final ratings"]
+    F1["Meeting: lead enters a final rating<br/>and comment for each item"]:::lead --> F2{"Every final field<br/>filled in?"}
+    F2 -->|"No"| F1
+    F2 -->|"Yes"| F3["Lead submits<br/>System calculates the overall score"]:::lead
+  end
+  F3 -->|"Final ratings shown to employee and HR<br/>No further changes"| C1
+
+  subgraph S5["Stage 5 · HR confirmation"]
+    C1["HR and management<br/>discuss the result"]:::hr --> C2["HR confirms the review<br/>with an optional note"]:::hr
+  end
+  C2 -->|"Employee and lead are notified"| D1
+
+  subgraph S6["Stage 6 · Review done"]
+    D1["Record locked permanently<br/>Added to evaluation history"]:::sys
+  end
+
+  subgraph KEY["Who acts"]
+    direction LR
+    L1["Lead"]:::lead ~~~ L2["Employee"]:::emp ~~~ L3["Both"]:::both ~~~ L4["HR"]:::hr ~~~ L5["System"]:::sys
+  end
+
+  classDef lead fill:#1D4ED8,stroke:#1E3A8A,color:#FFFFFF
+  classDef emp fill:#FFA94D,stroke:#B45309,color:#1F2937
+  classDef both fill:#FFE8CC,stroke:#1D4ED8,color:#1F2937
+  classDef hr fill:#FFFFFF,stroke:#1D4ED8,stroke-width:2px,color:#1E3A8A
+  classDef sys fill:#E5E7EB,stroke:#4B5563,color:#1F2937
+```
+
+The second diagram shows the same flow as messages between people and the system, including what each person can and can't see.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor HR
+  actor Lead
+  actor Employee
+  participant System
+
+  HR->>System: Open the cycle
+  System-->>Lead: Task: set KPIs for each team member, with a due date
+
+  rect rgb(235, 241, 255)
+    Note over Lead,System: Stage 1 · KPI setup
+    Lead->>System: Publish 3 to 6 KPIs for the coming year
+    System-->>Employee: Your review form is open
+  end
+
+  rect rgb(255, 244, 230)
+    Note over Lead,System: Stage 2 · Blind (neither sees the other's answers)
+    Employee->>System: Submit the self review
+    System-->>Lead: Self review submitted, your review is open
+    Lead->>System: Submit the manager review
+  end
+
+  rect rgb(235, 241, 255)
+    Note over HR,System: Stage 3 · Revealed
+    System-->>Employee: Both reviews are visible
+    System-->>Lead: Both reviews are visible
+    System-->>HR: Task: set up the meeting
+    HR->>System: Set the meeting date, time and place
+    System-->>Employee: Meeting details
+    System-->>Lead: Meeting details
+  end
+
+  rect rgb(255, 244, 230)
+    Note over HR,System: Stage 4 · Final ratings (final column hidden from employee and HR)
+    Lead->>System: Enter final ratings during the meeting
+    Lead->>System: Submit the agreed final ratings
+    System->>System: Calculate the overall score
+    System-->>Employee: Final ratings and overall score
+    System-->>HR: Task: confirm the review
+  end
+
+  rect rgb(235, 241, 255)
+    Note over HR,System: Stage 5 · HR confirmation
+    HR->>System: Confirm the review, with an optional note
+  end
+
+  Note over HR,System: Stage 6 · Review done (record locked)
+  System-->>Employee: Review confirmed
+  System-->>Lead: Review confirmed
 ```
 
 The employee submits first. The lead's review opens after that, and the lead sees the employee's answers only after submitting their own.
